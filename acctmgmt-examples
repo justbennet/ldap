@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+
+from acctmgmt import groups
+from time import sleep
+
+group = 'vacc-chump'
+user = 'maustin'
+admins = ['ehinchli', 'bfauber']
+
+print(f"Check that the group {group} does not exist")
+try:
+    group_obj = groups.examine(group)
+except ValueError as err:
+    print(err)
+    group_obj = None
+
+sleep(2)
+
+if group_obj is not None:
+    print(f"{group} should not exist; wait one while I remove it")
+    groups.empty(group)
+    groups.delete_group(group)
+    sleep(2)
+    print(f"OK.  {group} should no longer exist")
+
+print(f"Let's create {group} then look at it")
+
+groups.create_group(group)
+group_obj = groups.examine(group)
+sleep(2)
+
+print("It has an empty member list, so let's add one")
+
+groups.add_user_to_group(group, user)
+groups.add_user_to_group(group, 'jtlawson')
+group_obj = groups.examine(group)
+sleep(2)
+
+print("Now you can see two usernames in the members list")
+
+print("To remove a group, it must be first emptied")
+
+groups.empty_group(group)
+group_obj = groups.examine(group)
+groups.delete_group(group)
+sleep(2)
+
+msg = """We can create a group with an initial member list and description
+the member list 'admins' is defined above"""
+print(msg)
+groups.create_group(group, members=admins,
+    description="Test group: expires now")
+group_obj = groups.examine(group)
+sleep(2)
+
+print("Trying to delete a non-empty group raises a ValueError")
+try:
+    group_obj = groups.delete_group(group)
+except ValueError as err:
+    print(str(err))
+    group_obj = None
+sleep(2)
+
+print("Maybe this is a UVM class, and it needs to have it's expiration changed")
+groups.set_group_description(group, "Test group: expires tomorrow")
+group_obj = groups.examine(group)
+sleep(2)
+
+print("Some extra information about a group can be had by adding debug=True")
+group_obj = groups.examine(group, debug=True)
+sleep(2)
+
+print("Finally, let's clean up our dummy group")
+groups.empty_group(group)
+groups.delete_group(group)
+sleep(2)
+
+print("And double-check it is gone. You should see that it has 0 entries")
+try:
+    group_obj = groups.examine(group)
+except ValueError as err:
+    print(err)
+    group_obj = None
+
+print("Tha-tha-that's all, folks!")
+
